@@ -29,6 +29,9 @@ adduser www-data video
 mkdir -p /etc/backup_zm_conf
 cp -R /etc/zm/* /etc/backup_zm_conf/
 
+# d4void: /etc/cron.d will be restored as a volume at first container startup
+mv /etc/cron.d /etc/cron.d.bkp
+
 #to clear some data before saving this layer ...a docker image
 rm -R /var/www/html
 rm /etc/apache2/sites-enabled/000-default.conf

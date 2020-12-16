@@ -10,6 +10,9 @@ if [ -f /etc/configured ]; then
 else
  #code that need to run only one time ....	
 
+ #d4void: restore /etc/cron.d files to the volume
+ cp -rf /etc/cron.d.bkp/. /etc/cron.d
+ 
  #trays to fix problem with https://github.com/QuantumObject/docker-zoneminder/issues/22
  chown www-data /dev/shm
  mkdir -p /var/run/zm

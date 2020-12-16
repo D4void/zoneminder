@@ -1,7 +1,7 @@
 # d4void
-# adding https with traefik reverse proxy
+# adding https with traefik reverse proxy and letsencrypt cert
 # adding variable with .env file. See env.example
-# adding volume /etc/ssmtp and /var/log/apache2 for zoneminder
+# adding volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
 
 version: "3.7"
 
@@ -36,7 +36,7 @@ services:
           - "zm-db"
     volumes:
       - "${VOLDIR}/mysql:/var/lib/mysql"
-      - "${VOLDIR}/etc_mysql_confd:/etc/mysql/conf.d"
+      - "${VOLDIR}/etc/mysql_confd:/etc/mysql/conf.d"
       - type: tmpfs
         target: /dev/shm
     environment:
@@ -62,8 +62,9 @@ services:
       - "80"
     volumes:
       - "${VOLDIR}/cache:/var/cache/zoneminder"
-      - "${VOLDIR}/etc_zm:/etc/zm"
-      - "${VOLDIR}/etc_ssmtp:/etc/ssmtp"
+      - "${VOLDIR}/etc/cron.d:/etc/cron.d"
+      - "${VOLDIR}/etc/zm:/etc/zm"
+      - "${VOLDIR}/etc/ssmtp:/etc/ssmtp"
       - "${VOLDIR}/config:/config"
       - "${VOLDIR}/log:/var/log/zm"
       - "${VOLDIR}/apache2-log:/var/log/apache2/"

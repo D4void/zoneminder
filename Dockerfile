@@ -9,7 +9,7 @@
 FROM quantumobject/docker-baseimage:20.04
 LABEL maintainer="d4void <d4void@m4he.fr>"
 
-ENV TZ America/New_York
+ENV TZ Europe/Paris
 ENV ZM_DB_HOST db
 ENV ZM_DB_NAME zm
 ENV ZM_DB_USER zmuser
