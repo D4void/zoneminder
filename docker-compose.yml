@@ -1,7 +1,10 @@
-# d4void
-# adding https with traefik reverse proxy
-# adding variable with .env file. See env.example
-# adding volume /etc/ssmtp and /var/log/apache2 for zoneminder
+# D4void:
+#   Add https with traefik reverse proxy and letsencrypt cert
+#   Add variables with .env file to define things like FQDN, container ip address (for NAT and FW reasons), etc. Look at env.example
+#   Add volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
+#   Add letsencrypt certificate extraction with traefik-certs-dumper from ldez (to be used by zm event server)
+#
+# To create and start containers: docker-compose up -d
 
 version: "3.7"
 
@@ -9,22 +12,37 @@ services:
 
   traefik:
     restart: "unless-stopped"
-    image: "traefik:latest"
+    image: "traefik:v2.4"
     container_name: "traefik"
     ports:
-      - "80:80"
-      - "443:443"
-      #- "8080:8080"
+      - "${HOST_IP}:80:80"
+      - "${HOST_IP}:443:443"
+      - "${HOST_IP}:9000:9000"
+      #- "${HOST_IP}:9080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
-      - "./traefik/dynamic/:/etc/traefik/dynamic:ro"
+      - "${VOLDIR}/etc/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
+      - "${VOLDIR}/etc/traefik/dynamic/:/etc/traefik/dynamic:ro"
       - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/traefik-log:/log"
+      - "${VOLDIR}/log/traefik-log:/log"
     networks:
       zmnet:
         ipv4_address: ${TRFK_IP}
 
+  traefik-certs-dumper:
+    image: ldez/traefik-certs-dumper:v2.7.4
+    entrypoint: sh -c '
+      apk add jq
+      ; while ! [ -e /letsencrypt/acme.json ]
+      || ! [ `jq ".[] | .Certificates | length" /letsencrypt/acme.json` != 0 ]; do
+      sleep 1
+      ; done
+      && traefik-certs-dumper file --version v2 --watch
+       --source /letsencrypt/acme.json --dest /zmconfig/certs --post-hook "chmod -R 755 /zmconfig/certs" '
+    volumes:
+      - "${VOLDIR}/letsencrypt:/letsencrypt"
+      - "${VOLDIR}/etc/zm:/zmconfig"
+            
   zm-db:
     restart: "unless-stopped"
     image: "mariadb:latest"
@@ -36,7 +54,7 @@ services:
           - "zm-db"
     volumes:
       - "${VOLDIR}/mysql:/var/lib/mysql"
-      - "${VOLDIR}/etc_mysql_confd:/etc/mysql/conf.d"
+      - "${VOLDIR}/etc/mysql_confd:/etc/mysql/conf.d"
       - type: tmpfs
         target: /dev/shm
     environment:
@@ -51,7 +69,7 @@ services:
 
   zm:
     restart: "unless-stopped"
-    image: "d4void/docker-zoneminder:1.34"
+    image: "d4void/docker-zoneminder:1.36"
     container_name: "zm"
     depends_on:
       - zm-db
@@ -60,13 +78,16 @@ services:
         ipv4_address: ${ZM_IP}
     expose:
       - "80"
-    volumes:
-      - "${VOLDIR}/cache:/var/cache/zoneminder"
-      - "${VOLDIR}/etc_zm:/etc/zm"
-      - "${VOLDIR}/etc_ssmtp:/etc/ssmtp"
-      - "${VOLDIR}/config:/config"
-      - "${VOLDIR}/log:/var/log/zm"
-      - "${VOLDIR}/apache2-log:/var/log/apache2/"
+      - "9000"
+    volumes:      
+      - "${VOLDIR}/etc/cron.d:/etc/cron.d"
+      - "${VOLDIR}/etc/zm:/etc/zm"
+      - "${VOLDIR}/etc/ssmtp:/etc/ssmtp"
+      - "${VOLDIR}/log/zm-log:/var/log/zm"
+      - "${VOLDIR}/log/apache2-log:/var/log/apache2/"
+      - "${VOLDIR}/var/cache:/var/cache/zoneminder"
+      - "${VOLDIR}/var/lib/zmeventnotification/models:/var/lib/zmeventnotification/models"
+      - "${VOLDIR}/var/lib/zmeventnotification/images:/var/lib/zmeventnotification/images"
       - type: tmpfs
         target: /dev/shm
     environment:
@@ -75,18 +96,32 @@ services:
       - TZ=${TZ}
       - ZM_DB_HOST=zm-db
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.middlewares.zmcontainer-redirect-secure.redirectscheme.scheme=https"
-      - "traefik.http.routers.zmcontainer.middlewares=zmcontainer-redirect-secure"
-      - "traefik.http.routers.zmcontainer.rule=Host(`${FQDN}`)"
+      - "traefik.enable=true"     
+      - "traefik.http.routers.zmcontainer.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer.entrypoints=web"
-      - "traefik.http.routers.zmcontainer-secured.rule=Host(`${FQDN}`)"
+      - "traefik.http.routers.zmcontainer.middlewares=zmcontainer-redirect-secure"
+      - "traefik.http.middlewares.zmcontainer-redirect-secure.redirectscheme.scheme=https"
+      - "traefik.http.routers.zmcontainer-secured.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer-secured.entrypoints=websecure"
       - "traefik.http.routers.zmcontainer-secured.tls=true"
       - "traefik.http.routers.zmcontainer-secured.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmcontainer-secured.middlewares=security@file"
+      - "traefik.http.routers.zmcontainer-secured.service=myzmservice"      
+      - "traefik.http.services.myzmservice.loadbalancer.server.port=80"
+      - "traefik.http.services.myzmservice.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.zmescontainer.rule=Host(`${ES_FQDN}`)"
+      - "traefik.http.routers.zmescontainer.entrypoints=zmevent"
+      - "traefik.http.routers.zmescontainer.tls=true"
+      - "traefik.http.routers.zmescontainer.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.zmescontainer.middlewares=security@file"
+      - "traefik.http.routers.zmescontainer.service=myzmesservice"
+      - "traefik.http.services.myzmesservice.loadbalancer.server.port=9000"
+      - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=http"
 
 networks:
   zmnet:
-    external:
-      name: zmnet
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${SUBNET}
+          gateway: ${GATEWAY}
