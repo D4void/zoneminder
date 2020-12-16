@@ -1,106 +1,80 @@
-# D4void:
-#   Add https with traefik reverse proxy and letsencrypt cert
-#   Add variables with .env file to define things like FQDN, container ip address (for NAT and FW reasons), etc. Look at env.example
-#   Add volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
-#   Add letsencrypt certificate extraction with traefik-certs-dumper from ldez (to be used by zm event server)
+#   Compose file to start a Mariadb container and a Zoneminde container
+#
+#   Define variables in .env file (check env.example)
+#     Because of Nat and Firewall, containers IP are fixed
+#     Define volume directory for the container 
+#     Define Zmevent machine learning models to download at first container launch
+#   Https thanks to traefik reverse proxy (other project)
+#   Letsencrypt certificate extraction with traefik-certs-dumper from ldez (used by zmevent server)
 #
 # To create and start containers: docker-compose up -d
 
-version: "3.7"
-
 services:
-
-  traefik:
-    restart: "unless-stopped"
-    image: "traefik:v2.4"
-    container_name: "traefik"
-    ports:
-      - "${HOST_IP}:80:80"
-      - "${HOST_IP}:443:443"
-      - "${HOST_IP}:9000:9000"
-      #- "${HOST_IP}:9080:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "${VOLDIR}/etc/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
-      - "${VOLDIR}/etc/traefik/dynamic/:/etc/traefik/dynamic:ro"
-      - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/log/traefik-log:/log"
-    networks:
-      zmnet:
-        ipv4_address: ${TRFK_IP}
-
-  traefik-certs-dumper:
-    image: ldez/traefik-certs-dumper:v2.7.4
-    entrypoint: sh -c '
-      apk add jq
-      ; while ! [ -e /letsencrypt/acme.json ]
-      || ! [ `jq ".[] | .Certificates | length" /letsencrypt/acme.json` != 0 ]; do
-      sleep 1
-      ; done
-      && traefik-certs-dumper file --version v2 --watch
-       --source /letsencrypt/acme.json --dest /zmconfig/certs --post-hook "chmod -R 755 /zmconfig/certs" '
-    volumes:
-      - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/etc/zm:/zmconfig"
             
   zm-db:
-    restart: "unless-stopped"
-    image: "mariadb:latest"
+    image: "mariadb:10.9.5-jammy"
     container_name: "zm-db"
+    restart: "unless-stopped"
     networks:
       zmnet:
-        ipv4_address: ${ZMDB_IP}
-        aliases:
-          - "zm-db"
+        #ipv4_address: ${ZMDB_IP}
+        #aliases:
+        #  - "zm-db"
     volumes:
-      - "${VOLDIR}/mysql:/var/lib/mysql"
-      - "${VOLDIR}/etc/mysql_confd:/etc/mysql/conf.d"
+      - maria_data:/var/lib/mysql
+      - maria_conf:/etc/mysql/conf.d
       - type: tmpfs
         target: /dev/shm
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
       - TZ=${TZ}
-      - MYSQL_USER=zmuser
-      - MYSQL_PASSWORD=zmpass
-      - MYSQL_DATABASE=zm
-      - MYSQL_ROOT_HOST=%
-      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
 
   zm:
-    restart: "unless-stopped"
-    image: "d4void/docker-zoneminder:1.36"
+    image: "d4void/docker-zoneminder:1.36.33"
     container_name: "zm"
     depends_on:
       - zm-db
+    restart: "unless-stopped"
     networks:
+      default:
       zmnet:
-        ipv4_address: ${ZM_IP}
-    expose:
-      - "80"
-      - "9000"
+        #ipv4_address: ${ZM_IP}
+    #expose:
+    #  - "80"
+    #  - "9000"
     volumes:      
-      - "${VOLDIR}/etc/cron.d:/etc/cron.d"
-      - "${VOLDIR}/etc/zm:/etc/zm"
-      - "${VOLDIR}/etc/ssmtp:/etc/ssmtp"
-      - "${VOLDIR}/log/zm-log:/var/log/zm"
-      - "${VOLDIR}/log/apache2-log:/var/log/apache2/"
-      - "${VOLDIR}/var/cache:/var/cache/zoneminder"
-      - "${VOLDIR}/var/lib/zmeventnotification/models:/var/lib/zmeventnotification/models"
-      - "${VOLDIR}/var/lib/zmeventnotification/images:/var/lib/zmeventnotification/images"
+      - zm_cron:/etc/cron.d
+      - zm_conf:/etc/zm
+      - zm_ssmtp:/etc/ssmtp
+      - zm_log:/var/log/zm
+      - zm_apache_log:/var/log/apache2/
+      - zm_cache:/var/cache/zoneminder
+      - zm_models:/var/lib/zmeventnotification/models
+      - zm_images:/var/lib/zmeventnotification/images
       - type: tmpfs
         target: /dev/shm
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
       - TZ=${TZ}
       - ZM_DB_HOST=zm-db
+      - INSTALL_YOLOV3=${INSTALL_YOLOV3}
+      - INSTALL_TINYYOLOV3=${INSTALL_TINYYOLOV3}
+      - INSTALL_YOLOV4=${INSTALL_YOLOV4}
+      - INSTALL_TINYYOLOV4=${INSTALL_TINYYOLOV4}
+      - INSTALL_CORAL_EDGETPU=${INSTALL_CORAL_EDGETPU}
     labels:
       - "traefik.enable=true"     
       - "traefik.http.routers.zmcontainer.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer.entrypoints=web"
       - "traefik.http.routers.zmcontainer.middlewares=zmcontainer-redirect-secure"
+      - "traefik.enable=true"     
+      - "traefik.http.routers.zmcontainer.rule=Host(`${ZM_FQDN}`)"
+      - "traefik.http.routers.zmcontainer.entrypoints=web"
+      - "traefik.http.routers.zmcontainer.middlewares=zmcontainer-redirect-secure"
       - "traefik.http.middlewares.zmcontainer-redirect-secure.redirectscheme.scheme=https"
+      - "traefik.http.routers.zmcontainer-secured.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer-secured.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer-secured.entrypoints=websecure"
       - "traefik.http.routers.zmcontainer-secured.tls=true"
@@ -118,10 +92,100 @@ services:
       - "traefik.http.services.myzmesservice.loadbalancer.server.port=9000"
       - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=http"
 
+  traefik-certs-dumper:
+    image: ldez/traefik-certs-dumper:v2.8.1
+    entrypoint: sh -c '
+      apk add jq
+      ; while ! [ -e /letsencrypt/acme.json ]
+      || ! [ `jq ".[] | .Certificates | length" /letsencrypt/acme.json` != 0 ]; do
+      sleep 1
+      ; done
+      && traefik-certs-dumper file --version v2 --watch
+       --source /letsencrypt/acme.json --dest /zmconfig/certs --post-hook "chmod -R 755 /zmconfig/certs" '
+    networks:
+      - default
+      - zmnet
+    volumes:
+      - letsencrypt_data:/letsencrypt
+      - zm_conf:/zmconfig
+
+volumes:
+  maria_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/mysql
+      o: bind
+  maria_conf:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/etc/mysql_confd
+      o: bind
+  zm_cron:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/etc/cron.d
+      o: bind
+  zm_conf:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/etc/zm
+      o: bind
+  zm_ssmtp:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/etc/ssmtp
+      o: bind
+  zm_log:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/log/zm-log
+      o: bind
+  zm_apache_log:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/log/apache2-log
+      o: bind
+  zm_cache:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/var/cache
+      o: bind
+  zm_models:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/var/lib/zmeventnotification/models
+      o: bind
+  zm_images:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${ZM_VOL}/var/lib/zmeventnotification/images
+      o: bind
+  letsencrypt_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${LETSENCRYPT_VOL}
+      o: bind
+
 networks:
+  default:
+    external: true
+    name: MyTraefikNet
   zmnet:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${SUBNET}
-          gateway: ${GATEWAY}
+    internal: true
+    name: MyZmnet
+    #driver: bridge
+    #ipam:
+    #  config:
+    #    - subnet: ${SUBNET}
+    #      gateway: ${GATEWAY}
