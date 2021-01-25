@@ -89,5 +89,8 @@ services:
 
 networks:
   zmnet:
-    external:
-      name: zmnet
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${SUBNET}
+          gateway: ${GATEWAY}
