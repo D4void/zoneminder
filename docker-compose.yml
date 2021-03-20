@@ -2,6 +2,7 @@
 # adding https with traefik reverse proxy and letsencrypt cert
 # adding variable with .env file. See env.example
 # adding volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
+# docker-compose up -d
 
 version: "3.7"
 

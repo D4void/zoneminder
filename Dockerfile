@@ -4,7 +4,7 @@
 # D4void: adding /etc/ssmtp/ & /var/log/apache2 volumes
 #         adding cambozola archive file (site down sometimes)
 #
-# docker build -t d4void/docker-zoneminder:1.34 .
+# docker build -t d4void/docker-zoneminder:1.34.23 .
 
 FROM quantumobject/docker-baseimage:20.04
 LABEL maintainer="d4void <d4void@m4he.fr>"
