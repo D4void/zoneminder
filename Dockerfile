@@ -30,13 +30,13 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/
           dialog \
           ntpdate \
           ffmpeg \
-					ssmtp \
-					libyaml-perl \
-					libjson-perl \
-					make \
-					gcc \
-					net-tools \
-					build-essential \
+		  ssmtp \
+		  libyaml-perl \
+		  libjson-perl \
+		  make \
+		  gcc \
+		  net-tools \
+		  build-essential \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*  \
     && rm -rf /var/lib/apt/lists/*
