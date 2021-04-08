@@ -69,6 +69,8 @@ services:
       - "${VOLDIR}/config:/config"
       - "${VOLDIR}/log:/var/log/zm"
       - "${VOLDIR}/apache2-log:/var/log/apache2/"
+      - "${VOLDIR}/var/lib/zmeventnotification/models:/var/lib/zmeventnotification/models"
+      - "${VOLDIR}/var/lib/zmeventnotification/images:/var/lib/zmeventnotification/images"
       - type: tmpfs
         target: /dev/shm
     environment:
