@@ -88,16 +88,6 @@ COPY requirements.txt /usr/src/requirements.txt
 
 RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
-# Install cambozola
-# d4void: adding cambozola archive file instead of curl
-COPY cambozola-0.936.tar.gz /usr/src
-
-RUN cd /usr/src \
-    && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
-    && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
-    && rm /usr/src/cambozola-0.936.tar.gz \
-    && rm -R /usr/src/cambozola-0.936
-
 # Install zoneminder
 RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
@@ -132,6 +122,16 @@ RUN cd /usr/src/ \
     && cd /usr/src/zmeventnotification-${ZMEVENT_VERSION} \
     && ./install.sh --install-config --install-es --install-hook --no-interactive --no-download-models --no-pysudo \
     && rm -R /usr/src/zmeventnotification-${ZMEVENT_VERSION}
+
+# Install cambozola
+# d4void: adding cambozola archive file instead of curl
+COPY cambozola-0.936.tar.gz /usr/src
+
+RUN cd /usr/src \
+    && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
+    && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
+    && rm /usr/src/cambozola-0.936.tar.gz \
+    && rm -R /usr/src/cambozola-0.936
 
 # d4void: adding /etc/ssmtp/ & /var/log/apache2
 VOLUME /var/cache/zoneminder /etc/zm /config /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
