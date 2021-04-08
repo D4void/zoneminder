@@ -92,7 +92,7 @@ RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends php-gd zoneminder \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
     && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
     && ln -s /etc/apache2/conf-available/fqdn.conf /etc/apache2/conf-enabled/fqdn.conf \
     && sed -i "s|KeepAliveTimeout 5|KeepAliveTimeout 1|g" /etc/apache2/apache2.conf \
