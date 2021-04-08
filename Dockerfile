@@ -3,9 +3,32 @@
 # Based on quantumobject/docker-zoneminder
 # D4void: adding /etc/ssmtp/ & /var/log/apache2 volumes
 #         adding cambozola archive file (site down sometimes)
+#         Refactor docker build and add full zmeventserver by Thomas Mørch 
+#         https://github.com/QuantumObject/docker-zoneminder/pull/109
 #
-# docker build -t d4void/docker-zoneminder:1.34.23 .
+# docker build -t d4void/docker-zoneminder:1.34 .
 
+# Build missing perl dependencies for use in final container
+FROM ubuntu:20.04 as perlbuild
+
+ENV TZ Europe/Paris
+WORKDIR /usr/src
+RUN echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+        perl \
+        make \	
+        gcc \
+        net-tools \
+        build-essential \
+        dh-make-perl \
+        libgit-repository-perl \
+        libprotocol-websocket-perl \
+        apt-file \
+    && apt-get clean
+RUN apt-file update \
+    && dh-make-perl --build --cpan Net::WebSocket::Server \
+    && dh-make-perl --build --cpan Net::MQTT::Simple
+
+# Now build the final image
 FROM quantumobject/docker-baseimage:20.04
 LABEL maintainer="d4void <d4void@m4he.fr>"
 
@@ -16,81 +39,102 @@ ENV ZM_DB_USER zmuser
 ENV ZM_DB_PASS zmpass
 ENV ZM_DB_PORT 3306
 
+COPY --from=perlbuild /usr/src/*.deb /usr/src/
 
 # Update the container
 # Installation of nesesary package/software for this containers...
-RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
-    && echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
-          libvlc-dev  \
-          libvlccore-dev\
-          libapache2-mod-perl2 \
-          vlc \
-          ntp \
-          dialog \
-          ntpdate \
-          ffmpeg \
-		  ssmtp \
-		  libyaml-perl \
-		  libjson-perl \
-		  make \
-		  gcc \
-		  net-tools \
-		  build-essential \
+RUN echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+        libvlc-dev  \
+        libvlccore-dev\
+        apache2 \
+        libapache2-mod-perl2 \
+        vlc \
+        ntp \
+        dialog \
+        ntpdate \
+        ffmpeg \
+        ssmtp \
+        # Perl modules needed for zmeventserver
+        libyaml-perl \
+        libjson-perl \
+        libconfig-inifiles-perl \
+        liblwp-protocol-https-perl \
+        libprotocol-websocket-perl \
+        # Other dependencies for event zmeventserver
+        python3-pip \
+        libgeos-dev \
+        gifsicle \
+    && dpkg -i /usr/src/*.deb \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*  \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    &&  mkdir -p /etc/service/apache2 /var/log/apache2 /var/log/zm /etc/my_init.d
 
-# to add apache2 deamon to runit
-RUN mkdir -p /etc/service/apache2  /var/log/apache2 ; sync
-COPY apache2.sh /etc/service/apache2/run
-RUN chmod +x /etc/service/apache2/run \
+# copying scripts
+COPY *.sh /usr/src/
+
+# Moving scripts to correct locations and setting permissions
+RUN mv /usr/src/apache2.sh /etc/service/apache2/run \
+    && mv /usr/src/zm.sh /sbin/zm.sh \
+    && mv /usr/src/startup.sh /etc/my_init.d/startup.sh \
+    && chmod +x /etc/service/apache2/run \
     && cp /var/log/cron/config /var/log/apache2/ \
-    && chown -R www-data /var/log/apache2
+    && chown -R www-data /var/log/apache2 \
+    && chmod +x /sbin/zm.sh \
+    && chmod +x /etc/my_init.d/startup.sh
 
-# to add zm deamon to runit
-RUN mkdir -p /var/log/zm ; sync
-COPY zm.sh /sbin/zm.sh
-RUN chmod +x /sbin/zm.sh
+# Install python requirements for zmeventserver
+COPY requirements.txt /usr/src/requirements.txt
 
-##startup scripts
-#Pre-config scrip that maybe need to be run one time only when the container run the first time .. using a flag to don't
-#run it again ... use for conf for service ... when run the first time ...
-RUN mkdir -p /etc/my_init.d
-COPY startup.sh /etc/my_init.d/startup.sh
-RUN chmod +x /etc/my_init.d/startup.sh
+RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
-#pre-config scritp for different service that need to be run when container image is create
-#maybe include additional software that need to be installed ... with some service running ... like example mysqld
-COPY pre-conf.sh /sbin/pre-conf
-RUN chmod +x /sbin/pre-conf ; sync \
-    && /bin/bash -c /sbin/pre-conf \
-    && rm /sbin/pre-conf
-
+# Install cambozola
 # d4void: adding cambozola archive file instead of curl
 COPY cambozola-0.936.tar.gz /usr/src
 
 RUN cd /usr/src \
-        && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
-        && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
-        && rm /usr/src/cambozola-0.936.tar.gz \
-        && rm -R /usr/src/cambozola-0.936
+    && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
+    && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
+    && rm /usr/src/cambozola-0.936.tar.gz \
+    && rm -R /usr/src/cambozola-0.936
 
-# add stuff or zmeventnotification.pl
-RUN cd /usr/bin/ \
-    && wget https://raw.githubusercontent.com/pliablepixels/zmeventserver/master/zmeventnotification.pl \
-    && chmod a+x zmeventnotification.pl \
-    && mkdir -p /var/lib/zmeventnotification/push/ \
-    && chown -R www-data:www-data /var/lib/zmeventnotification
-RUN perl -MCPAN -e "install Digest::SHA1"
-RUN perl -MCPAN -e "install Crypt::MySQL"
-RUN perl -MCPAN -e "install Config::IniFiles"
-RUN perl -MCPAN -e "install Net::WebSocket::Server"
-RUN perl -MCPAN -e "install LWP::Protocol::https"
-RUN perl -MCPAN -e "install Net::MQTT::Simple"
+# Install zoneminder
+RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends php-gd zoneminder \
+    && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
+    && ln -s /etc/apache2/conf-available/fqdn.conf /etc/apache2/conf-enabled/fqdn.conf \
+    && sed -i "s|KeepAliveTimeout 5|KeepAliveTimeout 1|g" /etc/apache2/apache2.conf \
+    && sed -i "s|Timeout 300|Timeout 60|g" /etc/apache2/apache2.conf \
+    && sed -i "s|ServerSignature On|ServerSignature Off|g" /etc/apache2/conf-available/security.conf \
+    && sed -i "s|ServerTokens OS|ServerTokens Prod|g" /etc/apache2/conf-available/security.conf \
+    && echo "LogFormat \"%{X-Forwarded-For}i %l %u %t \\\"%r\\\" %>s %b \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\" proxy" >> /etc/apache2/apache2.conf \
+    && echo "CustomLog \${APACHE_LOG_DIR}/zoneminder_access.log proxy" >> /etc/apache2/conf-available/zoneminder.conf \
+    && a2disconf other-vhosts-access-log \
+    && a2enmod cgi rewrite \
+    && a2enconf zoneminder \
+    && chown -R www-data:www-data /usr/share/zoneminder/ \
+    && adduser www-data video \
+    && mkdir -p /etc/backup_zm_conf \
+    && mv /etc/cron.d /etc/cron.d.bkp \
+    && cp -R /etc/zm/* /etc/backup_zm_conf/ \
+    && rm -R /var/www/html \
+    && rm /etc/apache2/sites-enabled/000-default.conf \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/* \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install zmeventserver
+ENV ZMEVENT_VERSION 6.1.15
+RUN cd /usr/src/ \
+    && wget -qO- https://github.com/pliablepixels/zmeventnotification/archive/v${ZMEVENT_VERSION}.tar.gz |tar -xzv \
+    && cd /usr/src/zmeventnotification-${ZMEVENT_VERSION} \
+    && ./install.sh --install-config --install-es --install-hook --no-interactive --no-download-models --no-pysudo \
+    && rm -R /usr/src/zmeventnotification-${ZMEVENT_VERSION}
 
 # d4void: adding /etc/ssmtp/ & /var/log/apache2
-VOLUME /var/cache/zoneminder /etc/zm /config /var/log/zm /etc/ssmtp /var/log/apache2
+VOLUME /var/cache/zoneminder /etc/zm /config /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
 # to allow access from outside of the container  to the container service
 # at that ports need to allow access from firewall if need to access it outside of the server.
 EXPOSE 80 9000 6802
