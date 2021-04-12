@@ -124,14 +124,15 @@ RUN cd /usr/src/ \
     && rm -R /usr/src/zmeventnotification-${ZMEVENT_VERSION}
 
 # Install cambozola
-# d4void: adding cambozola archive file instead of curl
-COPY cambozola-0.936.tar.gz /usr/src
+#COPY cambozola-0.936.tar.gz /usr/src
 
-RUN cd /usr/src \
-    && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
-    && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
-    && rm /usr/src/cambozola-0.936.tar.gz \
-    && rm -R /usr/src/cambozola-0.936
+#RUN cd /usr/src \
+#    && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
+#    && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
+#    && chown -R www-data:www-data /usr/share/zoneminder/www/cambozola.jar \
+#    && chmod 775 /usr/share/zoneminder/www/cambozola.jar \
+#    && rm /usr/src/cambozola-0.936.tar.gz \
+#    && rm -R /usr/src/cambozola-0.936
 
 # d4void: adding /etc/ssmtp/ & /var/log/apache2
 VOLUME /var/cache/zoneminder /etc/zm /config /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images

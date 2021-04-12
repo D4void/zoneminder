@@ -15,6 +15,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "9000:9000"
       #- "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
@@ -61,6 +62,7 @@ services:
         ipv4_address: ${ZM_IP}
     expose:
       - "80"
+      - "9000"
     volumes:
       - "${VOLDIR}/cache:/var/cache/zoneminder"
       - "${VOLDIR}/etc/cron.d:/etc/cron.d"
