@@ -64,6 +64,7 @@ RUN echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive
         python3-pip \
         libgeos-dev \
         gifsicle \
+        sudo \
     && dpkg -i /usr/src/*.deb \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*  \
