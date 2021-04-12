@@ -106,9 +106,7 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/
     && a2enconf zoneminder \
     && chown -R www-data:www-data /usr/share/zoneminder/ \
     && adduser www-data video \
-    && mkdir -p /etc/backup_zm_conf \
     && mv /etc/cron.d /etc/cron.d.bkp \
-    && cp -R /etc/zm/* /etc/backup_zm_conf/ \
     && rm -R /var/www/html \
     && rm /etc/apache2/sites-enabled/000-default.conf \
     && apt-get clean \
@@ -116,12 +114,13 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/
     && rm -rf /var/lib/apt/lists/*
 
 # Install zmeventserver
-ENV ZMEVENT_VERSION 6.1.15
-RUN cd /usr/src/ \
-    && wget -qO- https://github.com/pliablepixels/zmeventnotification/archive/v${ZMEVENT_VERSION}.tar.gz |tar -xzv \
-    && cd /usr/src/zmeventnotification-${ZMEVENT_VERSION} \
+ENV ZMEVENT_VERSION v6.1.22
+RUN mkdir /usr/src/zmevent \
+    && cd /usr/src/zmevent \
+    && wget -qO- https://github.com/pliablepixels/zmeventnotification/archive/${ZMEVENT_VERSION}.tar.gz |tar -xzv --strip 1 \
     && ./install.sh --install-config --install-es --install-hook --no-interactive --no-download-models --no-pysudo \
-    && rm -R /usr/src/zmeventnotification-${ZMEVENT_VERSION}
+    && mkdir -p /etc/backup_zm_conf \
+    && cp -R /etc/zm/* /etc/backup_zm_conf/
 
 # Install cambozola
 #COPY cambozola-0.936.tar.gz /usr/src

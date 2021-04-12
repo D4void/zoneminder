@@ -67,6 +67,8 @@ else
     ln -sf /config/zmeventnotification.ini /etc/zm/zmeventnotification.ini
   fi
 
+chown -R www-data:www-data /var/lib/zmeventnotification/
+
   # waiting for mysql
   while !(mysql_ready)
   do
