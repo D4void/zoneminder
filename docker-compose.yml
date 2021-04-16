@@ -38,7 +38,7 @@ services:
       && traefik-certs-dumper file --version v2 --watch
        --source /data/acme.json --dest /data/certs'
     volumes:
-      - ${VOLDIR}/letsencrypt:/data
+      - ${VOLDIR}/config:/data
             
   zm-db:
     restart: "unless-stopped"
