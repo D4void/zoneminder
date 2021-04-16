@@ -26,9 +26,13 @@ else
  echo ${TZ:-America/New_York} > /etc/timezone
 
  # copy from backup of /etc/zm if config files missing ..
- if [ ! -f /etc/zm/zm.conf ]; then
+# if [ ! -f /etc/zm/zm.conf ]; then
+#	mkdir -p /etc/zm
+#	cp -R /etc/backup_zm_conf/. /etc/zm
+# fi
+ if [ ! -d /etc/zm/ ]; then
 	mkdir -p /etc/zm
-	cp -R /etc/backup_zm_conf/. /etc/zm
+	cp -R /etc/backup_zm_conf/* /etc/zm
  fi
 
  #if ZM_SERVER_HOST variable is provided in container use it as is, if not left 02-multiserver.conf unchanged
@@ -59,13 +63,13 @@ else
  chmod -R 770 /etc/zm /var/log/zm
 
  # Handle the zmeventnotification.ini file
- if [ -f /config/zmeventnotification.ini ]; then
-    echo "Moving zmeventnotification.ini"
-    if [ ! -d /var/cache/zoneminder/events ]; then
-       mkdir -p /etc/zm/
-    fi
-    ln -sf /config/zmeventnotification.ini /etc/zm/zmeventnotification.ini
-  fi
+ #if [ -f /config/zmeventnotification.ini ]; then
+ #   echo "Moving zmeventnotification.ini"
+ #   if [ ! -d /var/cache/zoneminder/events ]; then
+ #      mkdir -p /etc/zm/
+ #   fi
+ #   ln -sf /config/zmeventnotification.ini /etc/zm/zmeventnotification.ini
+ # fi
 
 chown -R www-data:www-data /var/lib/zmeventnotification/
 
