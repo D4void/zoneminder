@@ -31,14 +31,15 @@ services:
     image: ldez/traefik-certs-dumper:v2.7.4
     entrypoint: sh -c '
       apk add jq
-      ; while ! [ -e /data/acme.json ]
-      || ! [ `jq ".[] | .Certificates | length" /data/acme.json` != 0 ]; do
+      ; while ! [ -e /letsencrypt/acme.json ]
+      || ! [ `jq ".[] | .Certificates | length" /letsencrypt/acme.json` != 0 ]; do
       sleep 1
       ; done
       && traefik-certs-dumper file --version v2 --watch
-       --source /data/acme.json --dest /data/certs'
+       --source /letsencrypt/acme.json --dest /config/certs'
     volumes:
-      - ${VOLDIR}/config:/data
+      - "${VOLDIR}/letsencrypt:/letsencrypt"
+      - "${VOLDIR}/config:/config"
             
   zm-db:
     restart: "unless-stopped"
