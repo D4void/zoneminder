@@ -105,6 +105,10 @@ services:
       - "traefik.http.routers.zmcontainer-secured.tls=true"
       - "traefik.http.routers.zmcontainer-secured.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmcontainer-secured.middlewares=security@file"
+      - "traefik.tcp.routers.mytcprouter.entrypoints=zmevent"
+      - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.mytcprouter.service=mytcpservice"
+      - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=9000"
 
 networks:
   zmnet:
