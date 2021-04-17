@@ -106,9 +106,13 @@ services:
       - "traefik.http.routers.zmcontainer-secured.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmcontainer-secured.middlewares=security@file"
       - "traefik.tcp.routers.mytcprouter.entrypoints=zmevent"
-      - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`${FQDN}`)"
       - "traefik.tcp.routers.mytcprouter.service=mytcpservice"
+      - "traefik.tcp.routers.mytcprouter.tls=true"
+      - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
       - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=9000"
+
+
 
 networks:
   zmnet:
