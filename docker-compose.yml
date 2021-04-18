@@ -16,7 +16,7 @@ services:
       - "80:80"
       - "443:443"
       - "9000:9000"
-      - "9080:8080"
+      #- "9080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
@@ -36,10 +36,10 @@ services:
       sleep 1
       ; done
       && traefik-certs-dumper file --version v2 --watch
-       --source /letsencrypt/acme.json --dest /config/certs --post-hook "chmod -R 755 /config/certs" '
+       --source /letsencrypt/acme.json --dest /zmconfig/certs --post-hook "chmod -R 755 /zmconfig/certs" '
     volumes:
       - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/config:/config"
+      - "${VOLDIR}/etc/zm:/zmconfig"
             
   zm-db:
     restart: "unless-stopped"
@@ -111,8 +111,6 @@ services:
       - "traefik.tcp.routers.mytcprouter.tls=true"
       - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
       - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=9000"
-
-
 
 networks:
   zmnet:
