@@ -109,7 +109,8 @@ services:
       - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`${FQDN}`)"
       - "traefik.tcp.routers.mytcprouter.service=mytcpservice"
       - "traefik.tcp.routers.mytcprouter.tls=true"
-      - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
+      - "traefik.tcp.routers.mytcprouter.tls.passthrough=false"
+      - "traefik.tcp.routers.mytcprouter.tls.certresolver=mytlschallenge"
       - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=9000"
 
 
