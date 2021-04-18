@@ -36,7 +36,7 @@ services:
       sleep 1
       ; done
       && traefik-certs-dumper file --version v2 --watch
-       --source /letsencrypt/acme.json --dest /config/certs'
+       --source /letsencrypt/acme.json --dest /config/certs --post-hook "chown -R www-data:www-data /config/certs" '
     volumes:
       - "${VOLDIR}/letsencrypt:/letsencrypt"
       - "${VOLDIR}/config:/config"
@@ -109,8 +109,7 @@ services:
       - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`${FQDN}`)"
       - "traefik.tcp.routers.mytcprouter.service=mytcpservice"
       - "traefik.tcp.routers.mytcprouter.tls=true"
-      - "traefik.tcp.routers.mytcprouter.tls.passthrough=false"
-      - "traefik.tcp.routers.mytcprouter.tls.certresolver=mytlschallenge"
+      - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
       - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=9000"
 
 
