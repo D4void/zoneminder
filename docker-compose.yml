@@ -36,7 +36,7 @@ services:
       sleep 1
       ; done
       && traefik-certs-dumper file --version v2 --watch
-       --source /letsencrypt/acme.json --dest /config/certs --post-hook "chown -R www-data:www-data /config/certs" '
+       --source /letsencrypt/acme.json --dest /config/certs --post-hook "chmod -R 755 /config/certs" '
     volumes:
       - "${VOLDIR}/letsencrypt:/letsencrypt"
       - "${VOLDIR}/config:/config"
