@@ -114,7 +114,7 @@ services:
       - "traefik.http.routers.zmescontainer.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmescontainer.service=myzmesservice"
       - "traefik.http.services.myzmesservice.loadbalancer.server.port=9000"
-      - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=https"
+      - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=http"
 
 networks:
   zmnet:
