@@ -109,7 +109,7 @@ services:
       - "traefik.http.services.myzmservice.loadbalancer.server.port=80"
       - "traefik.http.services.myzmservice.loadbalancer.server.scheme=http"
       - "traefik.http.routers.zmescontainer.rule=Host(`${FQDNES}`)"
-      - "traefik.http.routers.zmescontainer.entrypoints=websecure"
+      - "traefik.http.routers.zmescontainer.entrypoints=zmevent"
       - "traefik.http.routers.zmescontainer.tls=true"
       - "traefik.http.routers.zmescontainer.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmescontainer.service=myzmesservice"
