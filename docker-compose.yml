@@ -105,12 +105,13 @@ services:
       - "traefik.http.routers.zmcontainer-secured.tls=true"
       - "traefik.http.routers.zmcontainer-secured.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmcontainer-secured.middlewares=security@file"
-      - "traefik.tcp.routers.mytcprouter.entrypoints=zmevent"
-      - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`${FQDN}`)"
-      - "traefik.tcp.routers.mytcprouter.service=mytcpservice"
-      - "traefik.tcp.routers.mytcprouter.tls=true"
-      - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
-      - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=9000"
+      - "traefik.http.routers.zmescontainer.rule=Host(`${FQDNES}`)"
+      - "traefik.http.routers.zmescontainer.entrypoints=websecure"
+      - "traefik.http.routers.zmescontainer.tls=true"
+      - "traefik.http.routers.zmescontainer.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.zmescontainer.service=myzmesservice"
+      - "traefik.http.services.myzmesservice.loadbalancer.server.port=9000"
+      - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=http"
 
 networks:
   zmnet:
