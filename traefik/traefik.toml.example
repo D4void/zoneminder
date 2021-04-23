@@ -27,6 +27,9 @@
 
   [entryPoints.websecure]
     address = ":443"
+  
+  [entryPoints.zmevent]
+    address = ":9000"
 
 [certificatesResolvers.mytlschallenge.acme]
     email = "name@email.com"
