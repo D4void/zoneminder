@@ -1,5 +1,4 @@
 # Name of container: docker-zoneminder
-# version of container: 0.6.4
 # Based on quantumobject/docker-zoneminder
 # D4void: adding /etc/ssmtp/ & /var/log/apache2 volumes
 #         adding cambozola archive file (site down sometimes)
@@ -13,9 +12,10 @@ FROM ubuntu:20.04 as perlbuild
 
 ENV TZ Europe/Paris
 WORKDIR /usr/src
-RUN echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+        tzdata \
         perl \
-        make \	
+        make \
         gcc \
         net-tools \
         build-essential \
@@ -43,7 +43,8 @@ COPY --from=perlbuild /usr/src/*.deb /usr/src/
 
 # Update the container
 # Installation of nesesary package/software for this containers...
-RUN echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+        tzdata \
         libvlc-dev  \
         libvlccore-dev\
         apache2 \
@@ -64,7 +65,6 @@ RUN echo $TZ > /etc/timezone && apt-get update && DEBIAN_FRONTEND=noninteractive
         python3-pip \
         libgeos-dev \
         gifsicle \
-        sudo \
     && dpkg -i /usr/src/*.deb \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*  \
@@ -122,17 +122,6 @@ RUN mkdir /usr/src/zmevent \
     && ./install.sh --install-config --install-es --install-hook --no-interactive --no-download-models --no-pysudo \
     && mkdir -p /etc/backup_zm_conf \
     && cp -R /etc/zm/* /etc/backup_zm_conf/
-
-# Install cambozola
-#COPY cambozola-0.936.tar.gz /usr/src
-
-#RUN cd /usr/src \
-#    && tar -xzvf /usr/src/cambozola-0.936.tar.gz \
-#    && mv cambozola-0.936/dist/cambozola.jar /usr/share/zoneminder/www  \
-#    && chown -R www-data:www-data /usr/share/zoneminder/www/cambozola.jar \
-#    && chmod 775 /usr/share/zoneminder/www/cambozola.jar \
-#    && rm /usr/src/cambozola-0.936.tar.gz \
-#    && rm -R /usr/src/cambozola-0.936
 
 # d4void: adding /etc/ssmtp/ & /var/log/apache2
 VOLUME /var/cache/zoneminder /etc/zm /config /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
