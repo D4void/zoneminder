@@ -19,10 +19,10 @@ services:
       #- "9080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
-      - "./traefik/dynamic/:/etc/traefik/dynamic:ro"
+      - "${VOLDIR}/etc/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
+      - "${VOLDIR}/etc/traefik/dynamic/:/etc/traefik/dynamic:ro"
       - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/traefik-log:/log"
+      - "${VOLDIR}/log/traefik-log:/log"
     networks:
       zmnet:
         ipv4_address: ${TRFK_IP}
@@ -77,14 +77,13 @@ services:
     expose:
       - "80"
       - "9000"
-    volumes:
-      - "${VOLDIR}/cache:/var/cache/zoneminder"
+    volumes:      
       - "${VOLDIR}/etc/cron.d:/etc/cron.d"
       - "${VOLDIR}/etc/zm:/etc/zm"
       - "${VOLDIR}/etc/ssmtp:/etc/ssmtp"
-      - "${VOLDIR}/config:/config"
-      - "${VOLDIR}/log:/var/log/zm"
-      - "${VOLDIR}/apache2-log:/var/log/apache2/"
+      - "${VOLDIR}/log/zm-log:/var/log/zm"
+      - "${VOLDIR}/log/apache2-log:/var/log/apache2/"
+      - "${VOLDIR}/var/cache:/var/cache/zoneminder"
       - "${VOLDIR}/var/lib/zmeventnotification/models:/var/lib/zmeventnotification/models"
       - "${VOLDIR}/var/lib/zmeventnotification/images:/var/lib/zmeventnotification/images"
       - type: tmpfs

@@ -124,7 +124,7 @@ RUN mkdir /usr/src/zmevent \
     && cp -R /etc/zm/* /etc/backup_zm_conf/
 
 # d4void: adding /etc/ssmtp/ & /var/log/apache2
-VOLUME /var/cache/zoneminder /etc/zm /config /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
+VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
 # to allow access from outside of the container  to the container service
 # at that ports need to allow access from firewall if need to access it outside of the server.
 EXPOSE 80 9000 6802
