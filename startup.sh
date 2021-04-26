@@ -10,6 +10,9 @@ if [ -f /etc/configured ]; then
 else
         #code that need to run only one time ....	
         
+        #d4void: set timezone of the container (otherwise zmpkg.pl and crontab profile switching revert time to utc)
+        ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
         #d4void: restore /etc/cron.d files to the volume
         cp -rf /etc/cron.d.bkp/. /etc/cron.d
  
