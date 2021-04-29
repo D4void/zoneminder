@@ -1,10 +1,12 @@
 # Name of container: docker-zoneminder
 # Based on quantumobject/docker-zoneminder
-# D4void: Add /etc/ssmtp/ & /var/log/apache2 volumes
-#         Refactor docker build and add full zmeventserver by Thomas Mørch 
-#         https://github.com/QuantumObject/docker-zoneminder/pull/109
-#         Backup /etc/zm after zmevent server installation (to keep ES ini files)
-#         Add tzdata package
+# D4void: 
+#   Add /etc/ssmtp/ & /var/log/apache2 volumes
+#   Refactor docker build and add full zmeventserver by Thomas Mørch 
+#       https://github.com/QuantumObject/docker-zoneminder/pull/109
+#   Backup /etc/zm after zmevent server installation (to keep ES ini files)
+#   Remove cambozola
+#   Add tzdata package
 #
 # docker build -t d4void/docker-zoneminder:1.34 .
 

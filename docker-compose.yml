@@ -1,8 +1,10 @@
-# d4void
-# adding https with traefik reverse proxy and letsencrypt cert
-# adding variable with .env file. See env.example
-# adding volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
-# docker-compose up -d
+# D4void:
+#   Add https with traefik reverse proxy and letsencrypt cert
+#   Add variables with .env file to define things like FQDN, container ip address (for NAT and FW reasons), etc. Look at env.example
+#   Add volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
+#   Add letsencrypt certificate extraction with traefik-certs-dumper from ldez (to be used by zm event server)
+#
+# To create and start containers: docker-compose up -d
 
 version: "3.7"
 
