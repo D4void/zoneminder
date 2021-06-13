@@ -58,6 +58,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-
         ntpdate \
         ffmpeg \
         ssmtp \
+        sudo \
         # Perl modules needed for zmeventserver
         libyaml-perl \
         libjson-perl \
@@ -118,7 +119,8 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/
     && rm -rf /var/lib/apt/lists/*
 
 # Install zmeventserver
-ENV ZMEVENT_VERSION v6.1.22
+#ENV ZMEVENT_VERSION v6.1.22
+ENV ZMEVENT_VERSION v6.1.25
 RUN mkdir /usr/src/zmevent \
     && cd /usr/src/zmevent \
     && wget -qO- https://github.com/pliablepixels/zmeventnotification/archive/${ZMEVENT_VERSION}.tar.gz |tar -xzv --strip 1 \
