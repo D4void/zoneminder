@@ -8,7 +8,7 @@
 #   Remove cambozola
 #   Add tzdata package
 #
-# docker build -t d4void/docker-zoneminder:1.34 .
+# docker build -t d4void/docker-zoneminder:1.36 .
 
 # Build missing perl dependencies for use in final container
 FROM ubuntu:20.04 as perlbuild
@@ -94,7 +94,7 @@ COPY requirements.txt /usr/src/requirements.txt
 RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
 # Install zoneminder
-RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
+RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
@@ -119,11 +119,10 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu `cat /etc/
     && rm -rf /var/lib/apt/lists/*
 
 # Install zmeventserver
-#ENV ZMEVENT_VERSION v6.1.22
-ENV ZMEVENT_VERSION v6.1.25
+ENV ZMEVENT_VERSION v6.1.27
 RUN mkdir /usr/src/zmevent \
     && cd /usr/src/zmevent \
-    && wget -qO- https://github.com/pliablepixels/zmeventnotification/archive/${ZMEVENT_VERSION}.tar.gz |tar -xzv --strip 1 \
+    && wget -qO- https://github.com/ZoneMinder/zmeventnotification/archive/${ZMEVENT_VERSION}.tar.gz |tar -xzv --strip 1 \
     && ./install.sh --install-config --install-es --install-hook --no-interactive --no-download-models --no-pysudo \
     && mkdir -p /etc/backup_zm_conf \
     && cp -R /etc/zm/* /etc/backup_zm_conf/

@@ -69,7 +69,7 @@ services:
 
   zm:
     restart: "unless-stopped"
-    image: "d4void/docker-zoneminder:1.34"
+    image: "d4void/docker-zoneminder:1.36"
     container_name: "zm"
     depends_on:
       - zm-db
