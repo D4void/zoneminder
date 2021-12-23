@@ -15,10 +15,10 @@ services:
     image: "traefik:v2.4"
     container_name: "traefik"
     ports:
-      - "80:80"
-      - "443:443"
-      - "9000:9000"
-      #- "9080:8080"
+      - "${HOST_IP}:80:80"
+      - "${HOST_IP}:443:443"
+      - "${HOST_IP}:9000:9000"
+      #- "${HOST_IP}:9080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "${VOLDIR}/etc/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
