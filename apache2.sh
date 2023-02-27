@@ -7,4 +7,4 @@
 #trap "kill -TERM -$pgrp; exit" EXIT TERM KILL SIGKILL SIGTERM SIGQUIT
 
 source /etc/apache2/envvars
-exec chpst -u root apache2ctl -D FOREGROUND 2>&1 
+exec /sbin/setuser root /usr/sbin/apache2ctl -D FOREGROUND 2>&1

@@ -1,5 +1,8 @@
 # Name of container: docker-zoneminder
-# Based on quantumobject/docker-zoneminder
+# Based on old project quantumobject/docker-zoneminder, now gone from Github
+#
+# Use phusion/baseimage as base image.
+# https://github.com/phusion/baseimage-docker
 # D4void: 
 #   Add /etc/ssmtp/ & /var/log/apache2 volumes
 #   Refactor docker build and add full zmeventserver by Thomas Mørch 
@@ -10,12 +13,15 @@
 #
 # docker build -t d4void/docker-zoneminder:1.36 .
 
-# Build missing perl dependencies for use in final container
-FROM ubuntu:20.04 as perlbuild
+###
+# Image to build missing perl dependencies for use in final container
+###
+
+FROM phusion/baseimage:jammy-1.0.1 as perlbuild
 
 ENV TZ Europe/Paris
 WORKDIR /usr/src
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+RUN apt-get update && apt-get install -y -q --no-install-recommends \
         tzdata \
         perl \
         make \
@@ -31,8 +37,11 @@ RUN apt-file update \
     && dh-make-perl --build --cpan Net::WebSocket::Server \
     && dh-make-perl --build --cpan Net::MQTT::Simple
 
-# Now build the final image
-FROM quantumobject/docker-baseimage:20.04
+###
+# Now build the zoneminder final image
+###
+
+FROM phusion/baseimage:jammy-1.0.1
 LABEL maintainer="d4void <d4void@m4he.fr>"
 
 ENV TZ Europe/Paris
@@ -45,8 +54,9 @@ ENV ZM_DB_PORT 3306
 COPY --from=perlbuild /usr/src/*.deb /usr/src/
 
 # Update the container
-# Installation of nesesary package/software for this containers...
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+# Installation of necessary package/software for this containers...
+RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
+    apt-get install -y -q --no-install-recommends \
         tzdata \
         libvlc-dev  \
         libvlccore-dev\
@@ -83,7 +93,6 @@ RUN mv /usr/src/apache2.sh /etc/service/apache2/run \
     && mv /usr/src/zm.sh /sbin/zm.sh \
     && mv /usr/src/startup.sh /etc/my_init.d/startup.sh \
     && chmod +x /etc/service/apache2/run \
-    && cp /var/log/cron/config /var/log/apache2/ \
     && chown -R www-data /var/log/apache2 \
     && chmod +x /sbin/zm.sh \
     && chmod +x /etc/my_init.d/startup.sh
@@ -97,7 +106,7 @@ RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
+    && apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
     && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
     && ln -s /etc/apache2/conf-available/fqdn.conf /etc/apache2/conf-enabled/fqdn.conf \
     && sed -i "s|KeepAliveTimeout 5|KeepAliveTimeout 1|g" /etc/apache2/apache2.conf \
@@ -129,9 +138,10 @@ RUN mkdir /usr/src/zmevent \
 
 # d4void: adding /etc/ssmtp/ & /var/log/apache2
 VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
+
 # to allow access from outside of the container  to the container service
 # at that ports need to allow access from firewall if need to access it outside of the server.
 EXPOSE 80 9000 6802
 
-# Use baseimage-docker's init system.
+# Use baseimage's init system.
 CMD ["/sbin/my_init"]
