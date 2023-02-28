@@ -22,7 +22,7 @@ else
         chown www-data:www-data /var/run/zm
 
         # set the memory limit of php
-        sed  -i "s|memory_limit = .*|memory_limit = ${PHP_MEMORY_LIMIT:-512M}|" /etc/php/7.4/apache2/php.ini
+        sed  -i "s|memory_limit = .*|memory_limit = ${PHP_MEMORY_LIMIT:-512M}|" /etc/php/8.1/apache2/php.ini
 
         # copy from backup of /etc/zm if config files missing ..
         if [ ! -f /etc/zm/zm.conf ]; then

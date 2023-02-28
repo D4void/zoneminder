@@ -45,7 +45,7 @@ services:
             
   zm-db:
     restart: "unless-stopped"
-    image: "mariadb:latest"
+    image: "mariadb:10.9.5-jammy"
     container_name: "zm-db"
     networks:
       zmnet:

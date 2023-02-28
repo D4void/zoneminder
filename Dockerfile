@@ -69,6 +69,7 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
         ffmpeg \
         ssmtp \
         sudo \
+        wget \
         # Perl modules needed for zmeventserver
         libyaml-perl \
         libjson-perl \
@@ -103,7 +104,7 @@ COPY requirements.txt /usr/src/requirements.txt
 RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
 # Install zoneminder
-RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
+RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `awk -F '=' '/^UBUNTU_CODENAME/{print $NF}' /etc/os-release` main" >> /etc/apt/sources.list  \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
     && apt-get update \
     && apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
