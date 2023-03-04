@@ -19,7 +19,6 @@
 
 FROM phusion/baseimage:jammy-1.0.1 as perlbuild
 
-ENV TZ Europe/Paris
 WORKDIR /usr/src
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
         tzdata \
@@ -44,7 +43,6 @@ RUN apt-file update \
 FROM phusion/baseimage:jammy-1.0.1
 LABEL maintainer="d4void <d4void@m4he.fr>"
 
-ENV TZ Europe/Paris
 ENV ZM_DB_HOST db
 ENV ZM_DB_NAME zm
 ENV ZM_DB_USER zmuser
@@ -119,9 +117,13 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `awk -F '=
     && a2disconf other-vhosts-access-log \
     && a2enmod cgi rewrite \
     && a2enconf zoneminder \
-    && chown -R www-data:www-data /usr/share/zoneminder/ \
     && adduser www-data video \
-    && mv /etc/cron.d /etc/cron.d.bkp \
+    && chown -R www-data:www-data /usr/share/zoneminder/ \
+    && mkdir -p /var/run/zm \
+    && chown www-data:www-data /var/run/zm \
+    && chown www-data /dev/shm \
+    && mkdir /etc/backup_cron.d \
+    && cp /etc/cron.d/* /etc/backup_cron.d \
     && rm -R /var/www/html \
     && rm /etc/apache2/sites-enabled/000-default.conf \
     && apt-get clean \
