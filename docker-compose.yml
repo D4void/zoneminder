@@ -10,39 +10,6 @@
 version: "3.7"
 
 services:
-
-  traefik:
-    restart: "unless-stopped"
-    image: "traefik:v2.4"
-    container_name: "traefik"
-    ports:
-      - "${HOST_IP}:80:80"
-      - "${HOST_IP}:443:443"
-      - "${HOST_IP}:9000:9000"
-      #- "${HOST_IP}:9080:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "${VOLDIR}/etc/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
-      - "${VOLDIR}/etc/traefik/dynamic/:/etc/traefik/dynamic:ro"
-      - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/log/traefik-log:/log"
-    networks:
-      zmnet:
-        ipv4_address: ${TRFK_IP}
-
-  traefik-certs-dumper:
-    image: ldez/traefik-certs-dumper:v2.7.4
-    entrypoint: sh -c '
-      apk add jq
-      ; while ! [ -e /letsencrypt/acme.json ]
-      || ! [ `jq ".[] | .Certificates | length" /letsencrypt/acme.json` != 0 ]; do
-      sleep 1
-      ; done
-      && traefik-certs-dumper file --version v2 --watch
-       --source /letsencrypt/acme.json --dest /zmconfig/certs --post-hook "chmod -R 755 /zmconfig/certs" '
-    volumes:
-      - "${VOLDIR}/letsencrypt:/letsencrypt"
-      - "${VOLDIR}/etc/zm:/zmconfig"
             
   zm-db:
     restart: "unless-stopped"
@@ -65,7 +32,6 @@ services:
       - MYSQL_USER=zmuser
       - MYSQL_PASSWORD=zmpass
       - MYSQL_DATABASE=zm
-      - MYSQL_ROOT_HOST=%
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
 
   zm:
@@ -123,6 +89,43 @@ services:
       - "traefik.http.routers.zmescontainer.service=myzmesservice"
       - "traefik.http.services.myzmesservice.loadbalancer.server.port=9000"
       - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=http"
+
+  traefik:
+    restart: "unless-stopped"
+    image: "traefik:v2.4"
+    container_name: "traefik"
+    depends_on:
+      - zm
+    ports:
+      - "${HOST_IP}:80:80"
+      - "${HOST_IP}:443:443"
+      - "${HOST_IP}:9000:9000"
+      #- "${HOST_IP}:9080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${VOLDIR}/etc/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
+      - "${VOLDIR}/etc/traefik/dynamic/:/etc/traefik/dynamic:ro"
+      - "${VOLDIR}/letsencrypt:/letsencrypt"
+      - "${VOLDIR}/log/traefik-log:/log"
+    networks:
+      zmnet:
+        ipv4_address: ${TRFK_IP}
+
+  traefik-certs-dumper:
+    image: ldez/traefik-certs-dumper:v2.7.4
+    depends_on:
+      - traefik
+    entrypoint: sh -c '
+      apk add jq
+      ; while ! [ -e /letsencrypt/acme.json ]
+      || ! [ `jq ".[] | .Certificates | length" /letsencrypt/acme.json` != 0 ]; do
+      sleep 1
+      ; done
+      && traefik-certs-dumper file --version v2 --watch
+       --source /letsencrypt/acme.json --dest /zmconfig/certs --post-hook "chmod -R 755 /zmconfig/certs" '
+    volumes:
+      - "${VOLDIR}/letsencrypt:/letsencrypt"
+      - "${VOLDIR}/etc/zm:/zmconfig"
 
 networks:
   zmnet:

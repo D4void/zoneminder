@@ -21,7 +21,7 @@ sed  -i "s|memory_limit = .*|memory_limit = ${PHP_MEMORY_LIMIT:-512M}|" /etc/php
 if [ ! -f /var/cache/zoneminder/.configured ]; then
 
         # code that need to run only one time - first time container launch ...
-        
+
         echo "First time container is running"
 
         # restore /etc/cron.d files to the volume
@@ -86,6 +86,12 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
         date > /var/cache/zoneminder/.configured
 fi
 
+# waiting for Mariadb
+while !(mysql_ready)
+do
+        sleep 3
+        echo "Waiting for Mariadb..."
+done
 # check db update
 zmupdate.pl -nointeractive
 # zm launch
