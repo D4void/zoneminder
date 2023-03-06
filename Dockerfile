@@ -58,7 +58,6 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
         apache2 \
         libapache2-mod-perl2 \
         vlc \
-        ntp \
         dialog \
         ntpdate \
         ffmpeg \
@@ -99,8 +98,7 @@ COPY requirements.txt /usr/src/requirements.txt
 RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
 # Install zoneminder
-RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `awk -F '=' '/^UBUNTU_CODENAME/{print $NF}' /etc/os-release` main" >> /etc/apt/sources.list  \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
+RUN add-apt-repository ppa:iconnor/zoneminder-1.36 \
     && apt-get update \
     && apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
     && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
