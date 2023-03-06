@@ -3,15 +3,13 @@
 #
 # Use phusion/baseimage as base image.
 # https://github.com/phusion/baseimage-docker
-# D4void: 
-#   Add /etc/ssmtp/ & /var/log/apache2 volumes
-#   Refactor docker build and add full zmeventserver by Thomas Mørch 
-#       https://github.com/QuantumObject/docker-zoneminder/pull/109
-#   Backup /etc/zm after zmevent server installation (to keep ES ini files)
-#   Remove cambozola
-#   Add tzdata package
 #
-# docker build -t d4void/docker-zoneminder:1.36 .
+# Build a Zoneminder image including zmeventserver
+# https://github.com/ZoneMinder/zoneminder 
+# https://github.com/ZoneMinder/zmeventnotification
+#
+#
+# docker build -t d4void/docker-zoneminder:1.36.33 .
 
 ###
 # Image to build missing perl dependencies for use in final container
@@ -37,11 +35,10 @@ RUN apt-file update \
     && dh-make-perl --build --cpan Net::MQTT::Simple
 
 ###
-# Now build the zoneminder final image
+# Now build the Zoneminder final image
 ###
 
 FROM phusion/baseimage:jammy-1.0.1
-LABEL maintainer="d4void <d4void@m4he.fr>"
 
 ENV ZM_DB_HOST db
 ENV ZM_DB_NAME zm
@@ -52,7 +49,7 @@ ENV ZM_DB_PORT 3306
 COPY --from=perlbuild /usr/src/*.deb /usr/src/
 
 # Update the container
-# Installation of necessary package/software for this containers...
+# Installation of necessary packages for this container...
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get install -y -q --no-install-recommends \
         tzdata \
@@ -139,11 +136,8 @@ RUN mkdir /usr/src/zmevent \
     && mkdir -p /etc/backup_zm_conf \
     && cp -R /etc/zm/* /etc/backup_zm_conf/
 
-# d4void: adding /etc/ssmtp/ & /var/log/apache2
 VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
 
-# to allow access from outside of the container  to the container service
-# at that ports need to allow access from firewall if need to access it outside of the server.
 EXPOSE 80 9000 6802
 
 # Use baseimage's init system.

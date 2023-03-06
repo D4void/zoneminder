@@ -17,18 +17,12 @@ awk '$0="date.timezone = "$0' /etc/timezone >> /etc/php/$phpver/apache2/php.ini
 # set the memory limit of php
 sed  -i "s|memory_limit = .*|memory_limit = ${PHP_MEMORY_LIMIT:-512M}|" /etc/php/8.1/apache2/php.ini
 
-#check if container already configured or not
-if [ -f /var/cache/zoneminder/configured ]; then
-        echo 'Container already configured'
-        # check db update
-        zmupdate.pl -nointeractive
-        # zm launch
-        rm -rf /var/run/zm/*
-        /sbin/zm.sh&
-else
-        #code that need to run only one time - first time container launch ...
+# check if container already configured or not
+if [ ! -f /var/cache/zoneminder/.configured ]; then
+
+        # code that need to run only one time - first time container launch ...
         
-        echo 'First container launch'
+        echo "First time container is running"
 
         # restore /etc/cron.d files to the volume
         cp -f /etc/backup_cron.d/* /etc/cron.d
@@ -38,7 +32,6 @@ else
                 mkdir -p /etc/zm
         	cp -Rf /etc/backup_zm_conf/* /etc/zm
         fi
-
 
         #if ZM_SERVER_HOST variable is provided in container use it as is, if not left 02-multiserver.conf unchanged
         if [ -v ZM_SERVER_HOST ]; then sed -i "s|#ZM_SERVER_HOST=|ZM_SERVER_HOST=${ZM_SERVER_HOST}|" /etc/zm/conf.d/02-multiserver.conf; fi
@@ -51,7 +44,7 @@ else
         sed  -i "s|ZM_DB_PORT=.*|ZM_DB_PORT=${ZM_DB_PORT}|" /etc/zm/zm.conf
         grep -q ZM_DB_PORT /etc/zm/zm.conf || echo ZM_DB_PORT=$ZM_DB_PORT >> /etc/zm/zm.conf
 
-        #!!!TO CHECK : check if Directories inside of /var/cache/zoneminder are present.
+        # check if Directories inside of /var/cache/zoneminder are present.
         if [ ! -d /var/cache/zoneminder/events ]; then
                 mkdir -p /var/cache/zoneminder/{events,images,temp,cache}
                 chown -R root:www-data /var/cache/zoneminder
@@ -61,6 +54,13 @@ else
         chown -R root:www-data /etc/zm /var/log/zm
         chmod -R 770 /etc/zm /var/log/zm
         chown -R www-data:www-data /var/lib/zmeventnotification/
+
+        # Machine Learning models download
+        # set env variables in compose file
+        # INSTALL_YOLOV3=no INSTALL_TINYYOLOV3=no INSTALL_YOLOV4=yes INSTALL_TINYYOLOV4=no INSTALL_CORAL_EDGETPU=no
+        echo "Downloading Machine Learning models"
+        cd /usr/src/zmevent/
+        ./install.sh --no-install-es --install-hook --no-install-config --no-hook-config-upgrade --no-pysudo --no-interactive > /dev/null 2>&1
 
         # waiting for Mariadb
         while !(mysql_ready)
@@ -80,12 +80,14 @@ else
 
                 # prep the database for zoneminder
         	mysql -u $ZM_DB_USER -p$ZM_DB_PASS -h $ZM_DB_HOST -P$ZM_DB_PORT $ZM_DB_NAME < /etc/mysql/conf.d/zm_create.sql
-                date > /var/cache/zoneminder/dbcreated
+                date > /var/cache/zoneminder/.dbcreated
         fi
 
-        # zm launch
-        rm -rf /var/run/zm/*
-        /sbin/zm.sh&
-
-        date > /var/cache/zoneminder/configured
+        date > /var/cache/zoneminder/.configured
 fi
+
+# check db update
+zmupdate.pl -nointeractive
+# zm launch
+rm -rf /var/run/zm/*
+/sbin/zm.sh&
