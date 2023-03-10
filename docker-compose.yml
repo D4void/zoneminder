@@ -1,9 +1,11 @@
-#   https with traefik reverse proxy and letsencrypt cert
-#   variables with .env file to define things like FQDN, container ip address (for NAT and FW reasons), etc. Look at env.example
-#   volume /etc/cron.d /etc/ssmtp and /var/log/apache2 for zoneminder
-#   letsencrypt certificate extraction with traefik-certs-dumper from ldez (to be used by zm event server)
-#   Zmevent machine learning models download at first container launch. models defined in environment
-#   OpenCV 4.5 installed with pip package (no GPU support)
+#   Compose file to start a Mariadb container and a Zoneminde container
+#
+#   Define variables in .env file (check env.example)
+#     For Nat and Firewall reason, container IP are fixed - Define FQDN for Letsencrypt
+#     Define volume directory for the container 
+#     Define Zmevent machine learning models to download at first container launch
+#   Https thanks to traefik reverse proxy and letsencrypt cert (set email in traefik.toml)
+#   Letsencrypt certificate extraction with traefik-certs-dumper from ldez (used by zmevent server)
 #
 # To create and start containers: docker-compose up -d
 
@@ -26,8 +28,6 @@ services:
       - type: tmpfs
         target: /dev/shm
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
       - TZ=${TZ}
       - MYSQL_USER=zmuser
       - MYSQL_PASSWORD=zmpass
@@ -58,15 +58,13 @@ services:
       - type: tmpfs
         target: /dev/shm
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
       - TZ=${TZ}
       - ZM_DB_HOST=zm-db
-      - INSTALL_YOLOV3=no
-      - INSTALL_TINYYOLOV3=no
-      - INSTALL_YOLOV4=yes
-      - INSTALL_TINYYOLOV4=no
-      - INSTALL_CORAL_EDGETPU=no
+      - INSTALL_YOLOV3=${INSTALL_YOLOV3}
+      - INSTALL_TINYYOLOV3=${INSTALL_TINYYOLOV3}
+      - INSTALL_YOLOV4=${INSTALL_YOLOV4}
+      - INSTALL_TINYYOLOV4=${INSTALL_TINYYOLOV4}
+      - INSTALL_CORAL_EDGETPU=${INSTALL_CORAL_EDGETPU}
     labels:
       - "traefik.enable=true"     
       - "traefik.http.routers.zmcontainer.rule=Host(`${ZM_FQDN}`)"

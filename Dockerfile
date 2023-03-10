@@ -1,10 +1,10 @@
-# Name of container: docker-zoneminder
+# Name of container: d4void/docker-zoneminder
 # Based on old project quantumobject/docker-zoneminder, now gone from Github
 #
 # Use phusion/baseimage as base image.
 # https://github.com/phusion/baseimage-docker
 #
-# Build a Zoneminder image including zmeventserver
+# Build a v1.36 Zoneminder image including zmeventserver (OpenCV 4.5 installed with pip so no GPU support)
 # https://github.com/ZoneMinder/zoneminder 
 # https://github.com/ZoneMinder/zmeventnotification
 #
@@ -134,7 +134,8 @@ RUN mkdir /usr/src/zmevent \
     && mkdir -p /etc/backup_zm_conf \
     && cp -R /etc/zm/* /etc/backup_zm_conf/
 
-VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
+VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 \
+       /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
 
 EXPOSE 80 9000 6802
 

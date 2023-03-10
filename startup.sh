@@ -1,4 +1,6 @@
 #!/bin/bash
+# Script executed at container startup
+# When zm container is launched for the first time, many things need to be done
 
 # Returns true once mysql can connect.
 mysql_ready() {
@@ -6,7 +8,6 @@ mysql_ready() {
 }
 
 set -e
-
 phpver="8.1"
 
 # set timezone of the container
@@ -17,10 +18,8 @@ awk '$0="date.timezone = "$0' /etc/timezone >> /etc/php/$phpver/apache2/php.ini
 # set the memory limit of php
 sed  -i "s|memory_limit = .*|memory_limit = ${PHP_MEMORY_LIMIT:-512M}|" /etc/php/8.1/apache2/php.ini
 
-# check if container already configured or not
+# check if container already configured or not. First time container launch ...
 if [ ! -f /var/cache/zoneminder/.configured ]; then
-
-        # code that need to run only one time - first time container launch ...
 
         echo "First time container is running"
 
@@ -48,11 +47,11 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
         if [ ! -d /var/cache/zoneminder/events ]; then
                 mkdir -p /var/cache/zoneminder/{events,images,temp,cache}
                 chown -R root:www-data /var/cache/zoneminder
-                chmod -R 770 /var/cache/zoneminder
+                chmod -R 775 /var/cache/zoneminder
         fi
 
-        chown -R root:www-data /etc/zm /var/log/zm
-        chmod -R 770 /etc/zm /var/log/zm
+        chown -R root:www-data /var/log/zm
+        chmod -R 775 /var/log/zm
         chown -R www-data:www-data /var/lib/zmeventnotification/
 
         # Machine Learning models download
