@@ -30,6 +30,7 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
         if [ ! -f /etc/zm/zm.conf ]; then
                 mkdir -p /etc/zm
         	cp -Rf /etc/backup_zm_conf/* /etc/zm
+                chmod o+r /etc/zm/zm.conf
         fi
 
         #if ZM_SERVER_HOST variable is provided in container use it as is, if not left 02-multiserver.conf unchanged
