@@ -1,8 +1,6 @@
 # Script to restore Zoneminder config
 #!/bin/bash
 
-source ../.env
-
 backup="/tmp/Zoneminder-confbackup.tgz"
 
 __checkdir() {
@@ -14,14 +12,19 @@ __checkdir() {
 
 }
 
+tar xvfz ${backup} -C $(dirname ${backup})
+
+cd $(dirname ${backup})/$(basename ${backup} .tgz)
+
+cp -f env ../.env
+
+source ../.env
+
 __checkdir "${VOLDIR}/etc/ssmtp"
 __checkdir "${VOLDIR}/etc/zm"
 __checkdir "${VOLDIR}/etc/traefik"
 __checkdir "${VOLDIR}/letsencrypt"
 
-tar xvfz ${backup} -C $(dirname ${backup})
-
-cd $(dirname ${backup})/$(basename ${backup} .tgz)
 cp -f ssmtp/* ${VOLDIR}/etc/ssmtp
 cp -f *.ini ${VOLDIR}/etc/zm
 cp -f traefik.toml ${VOLDIR}/etc/traefik

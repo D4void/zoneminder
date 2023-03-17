@@ -6,6 +6,7 @@ source ../.env
 backupdir="/tmp/Zoneminder-confbackup"
 mkdir ${backupdir}
 
+cp -f ../.env ${backupdir}/env
 cp -rf ${VOLDIR}/etc/ssmtp/ ${backupdir}
 cp -f ${VOLDIR}/etc/zm/*.ini ${backupdir}
 cp -f ${VOLDIR}/etc/traefik/traefik.toml ${backupdir}
