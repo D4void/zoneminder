@@ -1,7 +1,7 @@
 # Script to restore Zoneminder config
 #!/bin/bash
 
-source .env
+source ../.env
 
 backup="/tmp/Zoneminder-confbackup.tgz"
 

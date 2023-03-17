@@ -29,10 +29,10 @@ services:
         target: /dev/shm
     environment:
       - TZ=${TZ}
-      - MYSQL_USER=zmuser
-      - MYSQL_PASSWORD=zmpass
-      - MYSQL_DATABASE=zm
-      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
 
   zm:
     restart: "unless-stopped"

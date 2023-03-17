@@ -1,7 +1,7 @@
 # Script to backup Zoneminder config
 #!/bin/bash
 
-source .env
+source ../.env
 
 backupdir="/tmp/Zoneminder-confbackup"
 mkdir ${backupdir}
