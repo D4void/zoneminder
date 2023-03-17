@@ -90,7 +90,7 @@ services:
 
   traefik:
     restart: "unless-stopped"
-    image: "traefik:v2.4"
+    image: "traefik:v2.9.8"
     container_name: "traefik"
     depends_on:
       - zm
@@ -110,7 +110,7 @@ services:
         ipv4_address: ${TRFK_IP}
 
   traefik-certs-dumper:
-    image: ldez/traefik-certs-dumper:v2.7.4
+    image: ldez/traefik-certs-dumper:v2.8.1
     depends_on:
       - traefik
     entrypoint: sh -c '
