@@ -1,12 +1,12 @@
-# Script to restore Zoneminder config
 #!/bin/bash
+# Script to restore Zoneminder config
 
 backup="/tmp/Zoneminder-confbackup.tgz"
 
 __checkdir() {
 
     if [[ ! -d  $1 ]]; then
-        "Making directory $1."
+        echo "Making directory $1."
         mkdir -p $1
     fi
 
@@ -14,10 +14,8 @@ __checkdir() {
 
 tar xvfz ${backup} -C $(dirname ${backup})
 
-cd $(dirname ${backup})/$(basename ${backup} .tgz)
-
-cp -f env ../.env
-
+rdir="$(dirname ${backup})/$(basename ${backup} .tgz)"
+cp -f ${rdir}/env ../.env
 source ../.env
 
 __checkdir "${VOLDIR}/etc/ssmtp"
@@ -25,10 +23,10 @@ __checkdir "${VOLDIR}/etc/zm"
 __checkdir "${VOLDIR}/etc/traefik"
 __checkdir "${VOLDIR}/letsencrypt"
 
-cp -f ssmtp/* ${VOLDIR}/etc/ssmtp
-cp -f *.ini ${VOLDIR}/etc/zm
-cp -f traefik.toml ${VOLDIR}/etc/traefik
-cp -f acme.json ${VOLDIR}/letsencrypt
+cp -f ${rdir}/ssmtp/* ${VOLDIR}/etc/ssmtp
+cp -f ${rdir}/*.ini ${VOLDIR}/etc/zm
+cp -f ${rdir}/traefik.toml ${VOLDIR}/etc/traefik
+cp -f ${rdir}/acme.json ${VOLDIR}/letsencrypt
 
 echo "config files copied to volume ${VOLDIR}"
-rm -rf $(dirname ${backup})/$(basename ${backup} .tgz)
+rm -rf ${rdir}

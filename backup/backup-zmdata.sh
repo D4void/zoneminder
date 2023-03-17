@@ -1,5 +1,5 @@
-# Script to backup Zoneminder data
 #!/bin/bash
+# Script to backup Zoneminder data
 
 source ../.env
 
