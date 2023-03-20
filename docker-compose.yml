@@ -55,6 +55,7 @@ services:
       - "${VOLDIR}/var/cache:/var/cache/zoneminder"
       - "${VOLDIR}/var/lib/zmeventnotification/models:/var/lib/zmeventnotification/models"
       - "${VOLDIR}/var/lib/zmeventnotification/images:/var/lib/zmeventnotification/images"
+      - "${VOLDIR}/etc/traefik/:/etc/traefik/"
       - type: tmpfs
         target: /dev/shm
     environment:

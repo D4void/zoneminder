@@ -83,6 +83,9 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
 # copying scripts
 COPY *.sh /usr/src/
 
+# copying traefik config
+COPY traefik/ /etc/template_traefik
+
 # Moving scripts to correct locations and setting permissions
 RUN mv /usr/src/apache2.sh /etc/service/apache2/run \
     && mv /usr/src/zm.sh /sbin/zm.sh \

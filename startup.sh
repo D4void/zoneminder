@@ -23,6 +23,11 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
 
         echo "First time container is running"
 
+        # init traefik config to the volume
+        cp -rf /etc/template_traefik/* /etc/traefik
+        mv /etc/traefik/traefik.toml.example /etc/traefik/traefik.toml
+        sed -i "s|email =.*|email = \"${EMAIL}\"|" traefik.toml
+
         # restore /etc/cron.d files to the volume
         cp -f /etc/backup_cron.d/* /etc/cron.d
  
@@ -42,7 +47,6 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
         sed  -i "s|ZM_DB_USER=.*|ZM_DB_USER=${ZM_DB_USER}|" /etc/zm/zm.conf
         sed  -i "s|ZM_DB_PASS=.*|ZM_DB_PASS=${ZM_DB_PASS}|" /etc/zm/zm.conf
         sed  -i "s|ZM_DB_PORT=.*|ZM_DB_PORT=${ZM_DB_PORT}|" /etc/zm/zm.conf
-        grep -q ZM_DB_PORT /etc/zm/zm.conf || echo ZM_DB_PORT=$ZM_DB_PORT >> /etc/zm/zm.conf
 
         # check if Directories inside of /var/cache/zoneminder are present.
         if [ ! -d /var/cache/zoneminder/events ]; then
