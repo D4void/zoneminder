@@ -26,7 +26,7 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
         # init traefik config to the volume
         cp -rf /etc/template_traefik/* /etc/traefik
         mv /etc/traefik/traefik.toml.example /etc/traefik/traefik.toml
-        #sed -i "s|email =.*|email = \"${EMAIL}\"|" /etc/traefik/traefik.toml
+        sed -i "s|email =.*|email = \"${EMAIL}\"|" /etc/traefik/traefik.toml
 
         # restore /etc/cron.d files to the volume
         cp -f /etc/backup_cron.d/* /etc/cron.d
