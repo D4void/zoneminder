@@ -23,10 +23,13 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
 
         echo "First time container is running"
 
-        # init traefik config to the volume
+        # copy traefik config to the volume
         cp -rf /etc/template_traefik/* /etc/traefik
         mv /etc/traefik/traefik.toml.example /etc/traefik/traefik.toml
         sed -i "s|email =.*|email = \"${EMAIL}\"|" /etc/traefik/traefik.toml
+
+        # copy ssmtp config files to the volume
+        cp -rf /etc/template_ssmtp/* /etc/ssmtp
 
         # restore /etc/cron.d files to the volume
         cp -f /etc/backup_cron.d/* /etc/cron.d
@@ -59,7 +62,7 @@ if [ ! -f /var/cache/zoneminder/.configured ]; then
         chmod -R 775 /var/log/zm
         chown -R www-data:www-data /var/lib/zmeventnotification/
 
-        # Machine Learning models download
+        # Eventserver / Machine Learning models download
         # set env variables in compose file
         # INSTALL_YOLOV3=no INSTALL_TINYYOLOV3=no INSTALL_YOLOV4=yes INSTALL_TINYYOLOV4=no INSTALL_CORAL_EDGETPU=no
         echo "Downloading Machine Learning models"

@@ -104,7 +104,6 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "${VOLDIR}/etc/traefik:/etc/traefik:ro"
-      #- "${VOLDIR}/etc/traefik/dynamic/:/etc/traefik/dynamic:ro"
       - "${VOLDIR}/letsencrypt:/letsencrypt"
       - "${VOLDIR}/log/traefik-log:/log"
     networks:
