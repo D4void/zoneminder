@@ -20,12 +20,10 @@ source ../.env
 
 __checkdir "${VOLDIR}/etc/ssmtp"
 __checkdir "${VOLDIR}/etc/zm"
-__checkdir "${VOLDIR}/etc/traefik"
 __checkdir "${VOLDIR}/letsencrypt"
 
 cp -f ${rdir}/ssmtp/* ${VOLDIR}/etc/ssmtp
 cp -f ${rdir}/*.ini ${VOLDIR}/etc/zm
-cp -f ${rdir}/traefik.toml ${VOLDIR}/etc/traefik
 cp -f ${rdir}/acme.json ${VOLDIR}/letsencrypt
 
 echo "config files copied to volume ${VOLDIR}"
