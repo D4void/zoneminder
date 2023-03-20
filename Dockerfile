@@ -84,7 +84,7 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
 COPY *.sh /usr/src/
 
 # copying traefik config
-COPY traefik/ /etc/template_traefik
+COPY traefik/ /etc/template_traefik/
 
 # Moving scripts to correct locations and setting permissions
 RUN mv /usr/src/apache2.sh /etc/service/apache2/run \
@@ -138,7 +138,7 @@ RUN mkdir /usr/src/zmevent \
     && cp -R /etc/zm/* /etc/backup_zm_conf/
 
 VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 \
-       /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
+       /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images /etc/traefik
 
 EXPOSE 80 9000 6802
 
