@@ -47,7 +47,6 @@ ENV ZM_DB_PASS zmpass
 ENV ZM_DB_PORT 3306
 
 COPY --from=perlbuild /usr/src/*.deb /usr/src/
-COPY --from=perlbuild /usr/src/*.deb /usr/src/
 
 # Update the container
 # Installation of necessary packages for this container...

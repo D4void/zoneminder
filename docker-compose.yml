@@ -1,7 +1,6 @@
 #   Compose file to start a Mariadb container and a Zoneminde container
 #
 #   Define variables in .env file (check env.example)
-#     Because of Nat and Firewall, containers IP are fixed
 #     Define volume directory for the container 
 #     Define Zmevent machine learning models to download at first container launch
 #   Https thanks to traefik reverse proxy (other project)
@@ -17,9 +16,6 @@ services:
     restart: "unless-stopped"
     networks:
       zmnet:
-        #ipv4_address: ${ZMDB_IP}
-        #aliases:
-        #  - "zm-db"
     volumes:
       - maria_data:/var/lib/mysql
       - maria_conf:/etc/mysql/conf.d
@@ -41,10 +37,6 @@ services:
     networks:
       default:
       zmnet:
-        #ipv4_address: ${ZM_IP}
-    #expose:
-    #  - "80"
-    #  - "9000"
     volumes:      
       - zm_cron:/etc/cron.d
       - zm_conf:/etc/zm
@@ -65,22 +57,17 @@ services:
       - INSTALL_TINYYOLOV4=${INSTALL_TINYYOLOV4}
       - INSTALL_CORAL_EDGETPU=${INSTALL_CORAL_EDGETPU}
     labels:
-      - "traefik.enable=true"     
-      - "traefik.http.routers.zmcontainer.rule=Host(`${ZM_FQDN}`)"
-      - "traefik.http.routers.zmcontainer.entrypoints=web"
-      - "traefik.http.routers.zmcontainer.middlewares=zmcontainer-redirect-secure"
-      - "traefik.enable=true"     
+      - "traefik.enable=true"
       - "traefik.http.routers.zmcontainer.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer.entrypoints=web"
       - "traefik.http.routers.zmcontainer.middlewares=zmcontainer-redirect-secure"
       - "traefik.http.middlewares.zmcontainer-redirect-secure.redirectscheme.scheme=https"
       - "traefik.http.routers.zmcontainer-secured.rule=Host(`${ZM_FQDN}`)"
-      - "traefik.http.routers.zmcontainer-secured.rule=Host(`${ZM_FQDN}`)"
       - "traefik.http.routers.zmcontainer-secured.entrypoints=websecure"
       - "traefik.http.routers.zmcontainer-secured.tls=true"
       - "traefik.http.routers.zmcontainer-secured.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.zmcontainer-secured.middlewares=security@file"
-      - "traefik.http.routers.zmcontainer-secured.service=myzmservice"      
+      - "traefik.http.routers.zmcontainer-secured.service=myzmservice"
       - "traefik.http.services.myzmservice.loadbalancer.server.port=80"
       - "traefik.http.services.myzmservice.loadbalancer.server.scheme=http"
       - "traefik.http.routers.zmescontainer.rule=Host(`${ES_FQDN}`)"
@@ -184,8 +171,3 @@ networks:
   zmnet:
     internal: true
     name: MyZmnet
-    #driver: bridge
-    #ipam:
-    #  config:
-    #    - subnet: ${SUBNET}
-    #      gateway: ${GATEWAY}
