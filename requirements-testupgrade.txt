@@ -1,0 +1,12 @@
+opencv-contrib-python==4.9.0.80
+imutils==0.5.4
+pyzm==0.3.56
+numpy==1.26.4
+requests==2.31.0
+shapely==2.0.4
+scikit-learn==1.4.2
+future==1.0.0
+imageio==2.34.1
+imageio-ffmpeg==0.4.9
+pygifsicle==1.0.7
+Pillow==10.3.0
