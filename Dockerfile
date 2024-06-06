@@ -1,21 +1,24 @@
-# Name of container: docker-zoneminder
-# Based on quantumobject/docker-zoneminder
-# D4void: 
-#   Add /etc/ssmtp/ & /var/log/apache2 volumes
-#   Refactor docker build and add full zmeventserver by Thomas Mørch 
-#       https://github.com/QuantumObject/docker-zoneminder/pull/109
-#   Backup /etc/zm after zmevent server installation (to keep ES ini files)
-#   Remove cambozola
-#   Add tzdata package
+# Name of container: d4void/docker-zoneminder
+# Based on old project quantumobject/docker-zoneminder, now gone from Github
 #
-# docker build -t d4void/docker-zoneminder:1.36 .
+# Use phusion/baseimage as base image.
+# https://github.com/phusion/baseimage-docker
+#
+# Build a v1.36 Zoneminder image including zmeventserver (OpenCV 4.5 installed with pip so no GPU support)
+# https://github.com/ZoneMinder/zoneminder 
+# https://github.com/ZoneMinder/zmeventnotification
+#
+#
+# docker build -t d4void/docker-zoneminder:1.36.33 .
 
-# Build missing perl dependencies for use in final container
-FROM ubuntu:20.04 as perlbuild
+###
+# Image to build missing perl dependencies for use in final container
+###
 
-ENV TZ Europe/Paris
+FROM phusion/baseimage:jammy-1.0.4 as perlbuild
+
 WORKDIR /usr/src
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+RUN apt-get update && apt-get install -y -q --no-install-recommends \
         tzdata \
         perl \
         make \
@@ -31,11 +34,12 @@ RUN apt-file update \
     && dh-make-perl --build --cpan Net::WebSocket::Server \
     && dh-make-perl --build --cpan Net::MQTT::Simple
 
-# Now build the final image
-FROM quantumobject/docker-baseimage:20.04
-LABEL maintainer="d4void <d4void@m4he.fr>"
+###
+# Now build the Zoneminder final image
+###
 
-ENV TZ Europe/Paris
+FROM phusion/baseimage:jammy-1.0.4
+
 ENV ZM_DB_HOST db
 ENV ZM_DB_NAME zm
 ENV ZM_DB_USER zmuser
@@ -45,20 +49,21 @@ ENV ZM_DB_PORT 3306
 COPY --from=perlbuild /usr/src/*.deb /usr/src/
 
 # Update the container
-# Installation of nesesary package/software for this containers...
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+# Installation of necessary packages for this container...
+RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
+    apt-get install -y -q --no-install-recommends \
         tzdata \
         libvlc-dev  \
         libvlccore-dev\
         apache2 \
         libapache2-mod-perl2 \
         vlc \
-        ntp \
         dialog \
         ntpdate \
         ffmpeg \
         ssmtp \
         sudo \
+        wget \
         # Perl modules needed for zmeventserver
         libyaml-perl \
         libjson-perl \
@@ -78,12 +83,14 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-
 # copying scripts
 COPY *.sh /usr/src/
 
+# copying ssmtp config
+COPY etc_ssmtp/ /etc/template_ssmtp/
+
 # Moving scripts to correct locations and setting permissions
 RUN mv /usr/src/apache2.sh /etc/service/apache2/run \
     && mv /usr/src/zm.sh /sbin/zm.sh \
     && mv /usr/src/startup.sh /etc/my_init.d/startup.sh \
     && chmod +x /etc/service/apache2/run \
-    && cp /var/log/cron/config /var/log/apache2/ \
     && chown -R www-data /var/log/apache2 \
     && chmod +x /sbin/zm.sh \
     && chmod +x /etc/my_init.d/startup.sh
@@ -94,10 +101,9 @@ COPY requirements.txt /usr/src/requirements.txt
 RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
 # Install zoneminder
-RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `cat /etc/container_environment/DISTRIB_CODENAME` main" >> /etc/apt/sources.list  \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 776FFB04 \
+RUN add-apt-repository ppa:iconnor/zoneminder-1.36 \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
+    && apt-get install -y -q --no-install-recommends libapache2-mod-php php-gd zoneminder \
     && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
     && ln -s /etc/apache2/conf-available/fqdn.conf /etc/apache2/conf-enabled/fqdn.conf \
     && sed -i "s|KeepAliveTimeout 5|KeepAliveTimeout 1|g" /etc/apache2/apache2.conf \
@@ -109,9 +115,13 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `cat /etc/
     && a2disconf other-vhosts-access-log \
     && a2enmod cgi rewrite \
     && a2enconf zoneminder \
-    && chown -R www-data:www-data /usr/share/zoneminder/ \
     && adduser www-data video \
-    && mv /etc/cron.d /etc/cron.d.bkp \
+    && chown -R www-data:www-data /usr/share/zoneminder/ \
+    && mkdir -p /var/run/zm \
+    && chown www-data:www-data /var/run/zm \
+    && chown www-data /dev/shm \
+    && mkdir /etc/backup_cron.d \
+    && cp /etc/cron.d/* /etc/backup_cron.d \
     && rm -R /var/www/html \
     && rm /etc/apache2/sites-enabled/000-default.conf \
     && apt-get clean \
@@ -119,7 +129,7 @@ RUN echo "deb http://ppa.launchpad.net/iconnor/zoneminder-1.36/ubuntu `cat /etc/
     && rm -rf /var/lib/apt/lists/*
 
 # Install zmeventserver
-ENV ZMEVENT_VERSION v6.1.28
+ENV ZMEVENT_VERSION v6.1.29
 RUN mkdir /usr/src/zmevent \
     && cd /usr/src/zmevent \
     && wget -qO- https://github.com/ZoneMinder/zmeventnotification/archive/${ZMEVENT_VERSION}.tar.gz |tar -xzv --strip 1 \
@@ -127,11 +137,10 @@ RUN mkdir /usr/src/zmevent \
     && mkdir -p /etc/backup_zm_conf \
     && cp -R /etc/zm/* /etc/backup_zm_conf/
 
-# d4void: adding /etc/ssmtp/ & /var/log/apache2
-VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
-# to allow access from outside of the container  to the container service
-# at that ports need to allow access from firewall if need to access it outside of the server.
+VOLUME /var/cache/zoneminder /etc/zm /var/log/zm /etc/ssmtp /var/log/apache2 \
+       /var/lib/zmeventnotification/models /var/lib/zmeventnotification/images
+
 EXPOSE 80 9000 6802
 
-# Use baseimage-docker's init system.
+# Use baseimage's init system.
 CMD ["/sbin/my_init"]
