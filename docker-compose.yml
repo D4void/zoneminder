@@ -84,6 +84,8 @@ services:
 
   traefik-certs-dumper:
     image: ldez/traefik-certs-dumper:v2.8.1
+    depends_on:
+      - traefik
     entrypoint: sh -c '
       apk add jq
       ; while ! [ -e /letsencrypt/acme.json ]
