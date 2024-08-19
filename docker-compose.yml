@@ -33,6 +33,7 @@ services:
     container_name: "zm"
     depends_on:
       - zm-db
+      - traefik
     restart: "unless-stopped"
     networks:
       default:
