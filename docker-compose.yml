@@ -8,9 +8,6 @@
 #
 # To create and start containers: docker-compose up -d
 
-include:
-  - path: ../MyTraefik/docker-compose.yml
-
 services:
             
   zm-db:
