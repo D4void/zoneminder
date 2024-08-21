@@ -165,12 +165,12 @@ volumes:
       type: none
       device: ${ZM_VOL}/var/lib/zmeventnotification/images
       o: bind
-  letsencrypt_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${LETSENCRYPT_VOL}
-      o: bind
+  #letsencrypt_data:
+  #  driver: local
+  #  driver_opts:
+  #    type: none
+  #    device: ${LETSENCRYPT_VOL}
+  #    o: bind
 
 networks:
 #  default:
