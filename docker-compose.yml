@@ -8,6 +8,9 @@
 #
 # To create and start containers: docker-compose up -d
 
+include:
+  - path: ../MyTraefik/docker-compose.yml
+
 services:
             
   zm-db:
@@ -170,9 +173,9 @@ volumes:
       o: bind
 
 networks:
-  default:
-    external: true
-    name: MyTraefikNet
+#  default:
+#    external: true
+#    name: MyTraefikNet
   zmnet:
     internal: true
     name: MyZmnet
