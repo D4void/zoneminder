@@ -13,11 +13,11 @@ services:
   zm-db:
     image: "mariadb:10.9.5-jammy"
     container_name: "zm-db"
-    depends_on:
-      - traefik
+    #depends_on:
+    #  - traefik
     restart: "unless-stopped"
     networks:
-      zmnet:
+      - zmnet
     volumes:
       - maria_data:/var/lib/mysql
       - maria_conf:/etc/mysql/conf.d
@@ -38,8 +38,8 @@ services:
       - traefik
     restart: "unless-stopped"
     networks:
-      default:
-      zmnet:
+      - default
+      - zmnet
     volumes:      
       - zm_cron:/etc/cron.d
       - zm_conf:/etc/zm
