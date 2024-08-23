@@ -17,8 +17,8 @@ services:
     networks:
       - zmnet
     volumes:
-      - maria_data:/var/lib/mysql
-      - maria_conf:/etc/mysql/conf.d
+      - zm_maria_data:/var/lib/mysql
+      - zm_maria_conf:/etc/mysql/conf.d
       - type: tmpfs
         target: /dev/shm
     environment:
@@ -98,18 +98,18 @@ services:
       - default
       - zmnet
     volumes:
-      - letsencrypt_data:/letsencrypt
+      - traefik_letsencrypt_data:/letsencrypt
       - zm_conf:/zmconfig
 
 
 volumes:
-  maria_data:
+  zm_maria_data:
     driver: local
     driver_opts:
       type: none
       device: ${ZM_VOL}/mysql
       o: bind
-  maria_conf:
+  zm_maria_conf:
     driver: local
     driver_opts:
       type: none
