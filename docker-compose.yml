@@ -9,12 +9,10 @@
 # To create and start containers: docker-compose up -d
 
 services:
-            
+    
   zm-db:
     image: "mariadb:10.9.5-jammy"
     container_name: "zm-db"
-    #depends_on:
-    #  - traefik
     restart: "unless-stopped"
     networks:
       - zmnet
@@ -83,9 +81,11 @@ services:
       - "traefik.http.services.myzmesservice.loadbalancer.server.scheme=http"
 
   traefik-certs-dumper:
-    image: ldez/traefik-certs-dumper:v2.8.1
+    image: ldez/traefik-certs-dumper:v2.8.3
+    container_name: traefik-certs-dumper
     depends_on:
       - traefik
+    restart: "unless-stopped"
     entrypoint: sh -c '
       apk add jq
       ; while ! [ -e /letsencrypt/acme.json ]
@@ -100,6 +100,7 @@ services:
     volumes:
       - letsencrypt_data:/letsencrypt
       - zm_conf:/zmconfig
+
 
 volumes:
   maria_data:
@@ -162,17 +163,9 @@ volumes:
       type: none
       device: ${ZM_VOL}/var/lib/zmeventnotification/images
       o: bind
-  #letsencrypt_data:
-  #  driver: local
-  #  driver_opts:
-  #    type: none
-  #    device: ${LETSENCRYPT_VOL}
-  #    o: bind
+
 
 networks:
-#  default:
-#    external: true
-#    name: MyTraefikNet
   zmnet:
     internal: true
     name: MyZmnet
