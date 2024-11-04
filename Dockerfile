@@ -9,13 +9,13 @@
 # https://github.com/ZoneMinder/zmeventnotification
 #
 #
-# docker build -t d4void/docker-zoneminder:1.36.33 .
+# docker build -t d4void/docker-zoneminder:1.36.35 .
 
 ###
 # Image to build missing perl dependencies for use in final container
 ###
 
-FROM phusion/baseimage:jammy-1.0.4 as perlbuild
+FROM phusion/baseimage:jammy-1.0.4 AS perlbuild
 
 WORKDIR /usr/src
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
