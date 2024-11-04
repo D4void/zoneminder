@@ -29,7 +29,7 @@ services:
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
 
   zm:
-    image: "d4void/docker-zoneminder:1.36.33"
+    image: "d4void/docker-zoneminder:1.36.35"
     container_name: "zm"
     depends_on:
       - zm-db
