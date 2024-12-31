@@ -13,6 +13,8 @@ services:
   zm-db:
     image: "mariadb:10.9.5-jammy"
     container_name: "zm-db"
+    depends_on:
+      - traefik
     restart: "unless-stopped"
     networks:
       - zmnet
