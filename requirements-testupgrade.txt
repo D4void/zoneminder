@@ -2,7 +2,7 @@ opencv-contrib-python==4.9.0.80
 imutils==0.5.4
 pyzm==0.3.56
 numpy==1.26.4
-requests==2.31.0
+requests==2.32.2
 shapely==2.0.4
 scikit-learn==1.4.2
 future==1.0.0
